@@ -37,16 +37,62 @@ func IniciarConfiguracion(filePath string) *globals.Config {
 func LeerConsola() {
 	// Leer de la consola
 	reader := bufio.NewReader(os.Stdin)
-	log.Println("Ingrese los mensajes")
-	text, _ := reader.ReadString('\n')
-	log.Print(text)
+	for {
+		log.Print("Ingrese un mensaje (enter para salir):")
+		text, err := reader.ReadString('\n')
+		if err != nil {
+			log.Printf("Error leyendo de consola: %s", err.Error())
+			continue
+		}
+
+		if text == "\n" {
+			log.Println("Entrada vacía detectada. Terminando programa.")
+			break
+		}
+
+		log.Printf("Mensaje ingresado: %s", text)
+	}
 }
 
 func GenerarYEnviarPaquete() {
-	paquete := Paquete{}
+	var lineas []string
+	reader := bufio.NewReader(os.Stdin)
+
+	log.Println("Ingrese líneas de texto para el paquete (ENTER vacío para finalizar):")
+
+	for {
+		log.Print("> ")
+		texto, err := reader.ReadString('\n')
+		if err != nil {
+			log.Printf("Error leyendo de consola: %s", err.Error())
+			continue
+		}
+
+		// Eliminar salto de línea final
+		texto = texto[:len(texto)-1]
+
+		if texto == "" {
+			break
+		}
+
+		lineas = append(lineas, texto)
+	}
+
+	if len(lineas) == 0 {
+		log.Println("No se ingresaron líneas. No se envió ningún paquete.")
+		return
+	}
+
+	paquete := Paquete{
+		Valores: lineas,
+	}
+
+	log.Printf("Paquete a enviar: %+v", paquete)
+	EnviarPaquete(globals.ClientConfig.Ip, globals.ClientConfig.Puerto, paquete)
+	//paquete := Paquete{}
 	// Leemos y cargamos el paquete
 
-	log.Printf("paqute a enviar: %+v", paquete)
+	//log.Printf("paqute a enviar: %+v", paquete)
 	// Enviamos el paqute
 }
 
@@ -88,4 +134,6 @@ func ConfigurarLogger() {
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
+
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile) //para setear lo que paso con fecha y hora
 }
